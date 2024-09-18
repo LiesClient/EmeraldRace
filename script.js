@@ -13,8 +13,8 @@ let keyPressed = [];
 let events = [];
 
 let gripRadius = 12;
-let playerSpeed = 0.1;
-let jumpForce = 0.4;
+let playerSpeed = 10;
+let jumpForce = 40;
 let grappleRange = mag(vec(spX, spY)) * 3;
 let shotCooldown = 1; // seconds
 let bulletSpeed = grappleRange / 12;
@@ -51,13 +51,32 @@ let playerTwo = {
   score: 0
 };
 
-let wall = (x, y, w, h) => ({ p: vec(x + w / 2, y + h / 2), width: w, height: h, immovable: true, visible: true });
+let wall = (x, y, w, h) => ({ p: vec(x + w / 2, y + h / 2), width: Math.abs(w), height: Math.abs(h), immovable: true, visible: true });
 let boundingBoxes = [
   wall(0, height - 1, width, spY), // ground
   wall(0, -spY + 1, width, spY), // ceiling
   wall(-spX + 1, 0, spX, height),
   wall(width - 1, 0, spX, height),
 ];
+
+
+  // wall(0, height / 2 - 2, width / 2 - (width - spY * 4) / 3, 4),
+  // wall(width, height / 2 - 2, -(width / 2 - (width - spY * 4) / 3), 4),
+
+let area = (width / 2 - (width - spY * 4) / 3) * 4;
+
+for (let i = 1; i < 50; i += 3) {
+  let h = (height / 4) / i;
+  boundingBoxes.push(wall(
+    0, height / 2 - h / 2,
+    area / h, h
+  ));
+
+  boundingBoxes.push(wall(
+    width, height / 2 - h / 2,
+    -area / h, h
+  ));
+}
 
 let grapplingPoints = [];
 
@@ -74,14 +93,14 @@ let objects = [
 ];
 
 let forces = [
-  (object) => ({ x: 0, y: 0.1 }), // gravity
+  (object) => ({ x: 0, y: 10 }), // gravity
   (object) => { // friction
     if (object?.immovable) return { x: 0, y: 0 };
 
     let vel = sub(object.p, object.lp);
-    let frictionScale = 0.01;
+    let frictionScale = 0.015;
     if (checkGrip(object)) frictionScale *= 1.2;
-    if (object?.isGrappling) frictionScale *= 0.9;
+    if (object?.isGrappling) frictionScale *= 0.8;
     return scale(vel, -frictionScale);
   },
 ];
@@ -124,10 +143,10 @@ function loop() {
     objects[i].id = i;
   }
 
-  handleInput(dt / 10);
+  handleInput(dt / 1000);
 
   for (let i = 0; i < objects.length; i++) {
-    updateObject(objects[i], dt / 10);
+    updateObject(objects[i], dt / 1000);
   }
 
   // collisions
@@ -157,10 +176,19 @@ function loop() {
 
   renderGrappleVisualizer();
 
-  ctx.fillStyle = "white";
+  ctx.fillStyle = "#CFFF04";
+  ctx.strokeStyle = "#CFFF04";
+  ctx.setLineDash([4, 0, 2]);
   for (let i = 0; i < grapplingPoints.length; i++) {
-    ctx.fillRect(grapplingPoints[i].x - 2, grapplingPoints[i].y - 2, 4, 4);
+    ctx.beginPath();
+    ctx.arc(grapplingPoints[i].x, grapplingPoints[i].y, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(grapplingPoints[i].x, grapplingPoints[i].y, 9, 0, Math.PI * 2);
+    ctx.stroke();
   }
+  ctx.setLineDash([]);
 
   requestAnimationFrame(loop);
 }
@@ -215,14 +243,17 @@ function handleInput(dt) {
   });
 
   updatePlayer(playerOne, playerTwo, { left: "a", right: "d", up: "w", /* shoot: "x", */ grapple: "c" });
-  updatePlayer(playerTwo, playerOne, { left: "j", right: "l", up: "i", /* shoot: ".", */ grapple: "/" });
+  updatePlayer(playerTwo, playerOne, { left: "1", right: "3", up: "5", /* shoot: ".", */ grapple: "." });
 }
 
 function updatePlayer(player, enemy, binds) {
   let hasGrip = checkGrip(player);
+  let speedFactor = 1;
 
-  if (keyPressed[binds.left]) player.a.x -= playerSpeed;
-  if (keyPressed[binds.right]) player.a.x += playerSpeed;
+  if (!hasGrip) speedFactor *= 0.5;
+
+  if (keyPressed[binds.left]) player.a.x -= playerSpeed * speedFactor;
+  if (keyPressed[binds.right]) player.a.x += playerSpeed * speedFactor;
   if (keyPressed[binds.up]) {
     if (hasGrip) player.a.y -= jumpForce;
   }
@@ -395,7 +426,7 @@ function drawObject(object) {
     ctx.textBaseline = "middle";
     ctx.fillStyle = "white";
     ctx.font = `${(object.width * 1.2) / (object.score.toString().length)}px monospace`;
-    
+
     ctx.fillText(object.score, object.p.x, object.p.y);
   }
 }
@@ -412,14 +443,14 @@ function updateObject(object, dt) {
   }
 
   object.lp = copy(object.p);
-  object.p = add(object.p, add(scale(object.a, dt / 2), vel));
+  object.p = add(object.p, add(scale(object.a, dt), vel));
   object.a = vec(0, 0);
 
   if (object.isPlayer) updatePlayerObject(object, dt);
 }
 
 function updatePlayerObject(player, dt) {
-  player.cooldown = Math.max(player.cooldown - dt / 100, 0);
+  player.cooldown = Math.max(player.cooldown - dt, 0);
 
   if (player.isGrappling) {
     let grappleDistance = dist(player.lp, player.grapplePoint);
