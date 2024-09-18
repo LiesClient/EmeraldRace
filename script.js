@@ -52,9 +52,12 @@ let playerTwo = {
 };
 
 let wall = (x, y, w, h) => ({ p: vec(x + w / 2, y + h / 2), width: Math.abs(w), height: Math.abs(h), immovable: true, visible: true });
+
+// making the walls reallllllyyy big so you cant glitch through them
+let spacer = 1000000;
 let boundingBoxes = [
-  wall(0, height - 1, width, spY), // ground
-  wall(0, -spY + 1, width, spY), // ceiling
+  wall(-spacer, height - 1, spacer * 2 + width, spacer), // ground
+  wall(-spacer, -spacer + 1, spacer * 2 + width, spacer), // ceiling
   wall(-spX + 1, 0, spX, height),
   wall(width - 1, 0, spX, height),
 ];
@@ -161,6 +164,19 @@ function loop() {
     }
   }
 
+  for (let i = 0; i < objects.length; i++) {
+    if (!objects[i]?.isEmerald) continue;
+    if (objects[i].collected) continue;
+
+    for (let j = 0; j < objects.length; j++) {
+      if (objects[i].collected) continue;
+      if (!objects[j]?.immovable) continue;
+      if (i == j) continue;
+
+      objects[i].collected = checkCollision(objects[i], objects[j]);
+    }
+  }
+
   for (let i = objects.length - 1; i >= 0; i--) {
     if (objects[i]?.collected) {
       objects[i] = objects[objects.length - 1];
@@ -243,7 +259,11 @@ function handleInput(dt) {
   });
 
   updatePlayer(playerOne, playerTwo, { left: "a", right: "d", up: "w", /* shoot: "x", */ grapple: "c" });
-  updatePlayer(playerTwo, playerOne, { left: "1", right: "3", up: "5", /* shoot: ".", */ grapple: "." });
+
+  if (keyPressed["i"] || keyPressed["j"] || keyPressed["l"])
+    updatePlayer(playerTwo, playerOne, { left: "j", right: "l", up: "i", /* shoot: ".", */ grapple: "." });
+  else 
+    updatePlayer(playerTwo, playerOne, { left: "1", right: "3", up: "5", /* shoot: ".", */ grapple: "." });
 }
 
 function updatePlayer(player, enemy, binds) {
@@ -424,7 +444,7 @@ function drawObject(object) {
   if (object.score !== undefined) {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = "white";
+    ctx.fillStyle = "black";
     ctx.font = `${(object.width * 1.2) / (object.score.toString().length)}px monospace`;
 
     ctx.fillText(object.score, object.p.x, object.p.y);
