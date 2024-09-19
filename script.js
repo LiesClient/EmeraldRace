@@ -32,6 +32,7 @@ let playerOne = {
   isPlayer: true,
   isGrappling: false,
   grapplePoint: null,
+  grappleTransition: 0,
   score: 0
 };
 
@@ -48,6 +49,7 @@ let playerTwo = {
   isPlayer: true,
   isGrappling: false,
   grapplePoint: null,
+  grappleTransition: 0,
   score: 0
 };
 
@@ -58,8 +60,8 @@ let spacer = 1000000;
 let boundingBoxes = [
   wall(-spacer, height - 1, spacer * 2 + width, spacer), // ground
   wall(-spacer, -spacer + 1, spacer * 2 + width, spacer), // ceiling
-  wall(-spX + 1, 0, spX, height),
-  wall(width - 1, 0, spX, height),
+  wall(-spacer + 1, 0, spacer, height),
+  wall(width - 1, 0, spacer, height),
 ];
 
 
@@ -244,7 +246,8 @@ function drawClosestGrapple(player) {
   ctx.arc(grapplePoint.x, grapplePoint.y, 6, 0, Math.PI * 2);
   ctx.stroke();
 
-  if (!player.isGrappling) ctx.setLineDash([0, 12, 4]);
+  let x = 1 - (1 - player.grappleTransition) ** 3;
+  ctx.setLineDash([4, 12 * (1 - x)]);
 
   ctx.beginPath();
   ctx.moveTo(player.p.x, player.p.y);
@@ -471,6 +474,8 @@ function updateObject(object, dt) {
 
 function updatePlayerObject(player, dt) {
   player.cooldown = Math.max(player.cooldown - dt, 0);
+
+  player.grappleTransition = Math.max(Math.min(player.grappleTransition + dt * (player.isGrappling ? 1 : -1), 1), 0);
 
   if (player.isGrappling) {
     let grappleDistance = dist(player.lp, player.grapplePoint);
