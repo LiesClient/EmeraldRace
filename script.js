@@ -484,6 +484,11 @@ function updatePlayerObject(player, dt) {
 
     player.p = add(player.lp, scale(grappleDirection, distanceMoved));
   }
+
+  if (player.p.x < 0) { player.p.x = 0; }
+  if (player.p.y < 0) { player.p.y = 0; }
+  if (player.p.x > width) { player.p.x = width; }
+  if (player.p.y > height) { player.p.y = height; }
 }
 
 function output(text, reset) {
