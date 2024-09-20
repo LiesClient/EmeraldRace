@@ -116,6 +116,13 @@ function init() {
   document.addEventListener("keydown", e => events.push({ key: e.key.toLowerCase(), val: true }));
   document.addEventListener("keyup", e => events.push({ key: e.key.toLowerCase(), val: false }));
 
+  document.addEventListener("mousedown", e => {
+    let mouse = vec(e.x, e.y);
+    let dir = sub(mouse, playerOne.p);
+
+    playerOne.a = add(playerOne.a, scale(dir, 1000));
+  });
+
   spawnEmerald();
   spawnEmerald();
   spawnEmerald();
@@ -149,6 +156,10 @@ function loop() {
   }
 
   handleInput(dt / 1000);
+
+  if (keyPressed["b"]) {
+    output(JSON.stringify({ playerOne, playerTwo }, null, " ").replaceAll("\"", ""), true);
+  } else output(false, true);
 
   for (let i = 0; i < objects.length; i++) {
     updateObject(objects[i], dt / 1000);
@@ -489,11 +500,20 @@ function updatePlayerObject(player, dt) {
   if (player.p.y < 0) { player.p.y = 0; }
   if (player.p.x > width) { player.p.x = width; }
   if (player.p.y > height) { player.p.y = height; }
+
+  if (isNaN(player.p.x)) player.p.x = width / 2;
+  if (isNaN(player.p.y)) player.p.y = height / 2;
+  if (isNaN(player.lp.x)) player.lp.x = width / 2;
+  if (isNaN(player.lp.y)) player.lp.y = height / 2;
 }
 
 function output(text, reset) {
   if (reset) outputEl.textContent = "";
-  outputEl.textContent += JSON.stringify(text) + "\n";
+  if (text) {
+    if (typeof text == 'string')
+      outputEl.textContent += text + "\n";
+    else outputEl.textContent += JSON.stringify(text) + "\n";
+  }
 }
 
 function vec(x, y) { return { x, y }; }
