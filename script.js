@@ -116,12 +116,12 @@ function init() {
   document.addEventListener("keydown", e => events.push({ key: e.key.toLowerCase(), val: true }));
   document.addEventListener("keyup", e => events.push({ key: e.key.toLowerCase(), val: false }));
 
-  document.addEventListener("mousedown", e => {
-    let mouse = vec(e.x, e.y);
-    let dir = sub(mouse, playerOne.p);
+  // document.addEventListener("mousedown", e => {
+  //   let mouse = vec(e.x, e.y);
+  //   let dir = sub(mouse, playerOne.p);
 
-    playerOne.a = add(playerOne.a, scale(dir, 1000));
-  });
+  //   playerOne.a = add(playerOne.a, scale(dir, 1000));
+  // });
 
   spawnEmerald();
   spawnEmerald();
